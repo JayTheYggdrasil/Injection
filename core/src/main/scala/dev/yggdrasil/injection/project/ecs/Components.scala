@@ -3,6 +3,7 @@ package dev.yggdrasil.injection.project.ecs
 import dev.yggdrasil.injection.util.{InfiniteGrid, LoopedVector}
 import dev.yggdrasil.injection.framework.ecs.Component
 import dev.yggdrasil.injection.framework.ecs.Entity
+import dev.yggdrasil.injection.framework.ecs.System.EntityStorage
 
 object Components {
   case class Direction(x: Int, y: Int) extends Component
@@ -19,11 +20,13 @@ object Components {
 
   case class GridPosition(x: Int, y: Int, gridId: Int) extends Component
 
-  case class Grid(origin: InfiniteGrid[Entity]) extends Component
+  case class GridEntity(parentID: Int) extends Component
 
   case class Pushable() extends Component
 
-  case class Space() extends Component
+  case class Space(entityRef: Option[Int]) extends Component {
+    def clear: Space = Space(None)
+  }
 
   case class KeyHandler(keySet: Set[Int], hasInput: Boolean) extends Component {
     def use(code: Int): KeyHandler = KeyHandler(keySet - code, keySet.nonEmpty)

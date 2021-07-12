@@ -2,8 +2,9 @@ package dev.yggdrasil.injection.project.ecs.Systems
 
 import dev.yggdrasil.injection.framework.ecs.Entity
 import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState, System}
-import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, Grid, GridPosition, Pushable, Space}
-import dev.yggdrasil.injection.project.ecs.Entities.updateStorageWithGrid
+import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridEntity, GridPosition, Pushable, Space}
+import dev.yggdrasil.injection.project.ecs.Entities
+import dev.yggdrasil.injection.project.ecs.Entities.{childOf, neighborOf, parentOf, putGridEntity}
 import dev.yggdrasil.injection.project.ui.Global
 import dev.yggdrasil.injection.util.{InfiniteGrid, LoopedVector}
 
@@ -21,7 +22,7 @@ case class SequencedMovement(name: String, stepInterval: Float, current: Int, se
     val systemsWithoutMe: Set[System] = active - this
 
     if (!shouldStep) {
-      val sys: System = SequencedMovement(name, stepInterval, current, sequence, lastSuccessfulIndex, accumulatedDelta + delta)
+      val sys: System = copy(accumulatedDelta = accumulatedDelta + delta)
       return gameState.copy(entityStorage, systemsWithoutMe + sys)
     }
 
@@ -30,27 +31,26 @@ case class SequencedMovement(name: String, stepInterval: Float, current: Int, se
 
     val entity: Entity = entityStorage(entityId)
 
-    // Deactivate if nothing is able to move
+    // The entity must be on a grid
+    assert(entity.getInstance(classOf[GridEntity]).nonEmpty)
+
+    // Deactivate if nothing in the sequence is able to move
     if (lastSuccessfulIndex % seqLength == current % seqLength && !movable(entity, entityStorage))
       return gameState.copy(entityStorage, systemsWithoutMe)
 
 
     val (newMe, updatedStorage) = tryMove(entity, entityStorage) match {
-        // Move is a success
-      case Some(es) => SequencedMovement(name, stepInterval, current + 1, sequence, lastSuccessfulIndex = current) -> es
-        // Move is a failure
-      case None =>
-        return SequencedMovement(name, stepInterval, current + 1, sequence, lastSuccessfulIndex, accumulatedDelta)(delta, gameState)
+      case Some(es) => // Move is a success
+        copy(current = current + 1, lastSuccessfulIndex = current, accumulatedDelta = 0) -> es
+      case None => // Move is a failure
+        return copy(current = current + 1)(delta, gameState)
     }
 
 
     val _active: Set[System] = systemsWithoutMe + newMe
 
-    // If the entity has a grid, we update it
-    val  gridUpdatedStorage = entity.getInstance(classOf[GridPosition]).map(
-      gridPos => updateStorageWithGrid(updatedStorage, updatedStorage(gridPos.gridId))
-    ).getOrElse(updatedStorage)
-    gameState.copy(gridUpdatedStorage, _active)
+
+    gameState.copy(updatedStorage, _active)
   }
 
   def tryMove(entity: Entity, entityStorage: EntityStorage): Option[EntityStorage] =
@@ -60,75 +60,28 @@ case class SequencedMovement(name: String, stepInterval: Float, current: Int, se
     direction.getOrElse(entity.getInstance(classOf[Direction]).getOrElse(Direction.UP))
 
   def movable(entity: Entity, entityStorage: EntityStorage, direction: Option[Direction] = None): Boolean = {
-    val _gridPosition = entity.getInstance(classOf[GridPosition])
-    val _pushable = entity.getInstance(classOf[Pushable])
-    val _grid = _gridPosition.map(p => entityStorage(p.gridId)).flatMap(_.getInstance(classOf[Grid]))
+    val dir = resolveDirection(direction, entity)
 
-    // An entity needs all of these components to be considered movable
-    _gridPosition zip _grid zip _pushable match {
-      case Some(gridPosition -> grid -> _) => {
-        val dir = resolveDirection(direction, entity)
-
-        // Check to see if the current entity is an arrow facing against the direction of motion
-        val cantPushArrow = entity.getInstance(classOf[Arrow]) zip entity.getInstance(classOf[Direction]) match {
-          case Some((_, direction)) => direction.x + dir.x == 0 && direction.y + dir.y == 0
-          case None => false
-        }
-
-
-        // If it is then we can't push
-        if(cantPushArrow) return false
-
-
-        // See if we can move into the neighboring square
-        val startingLocation = grid.origin.toLocation(gridPosition.x, gridPosition.y)
-
-        val entityToBePushed = startingLocation.toDirection(dir).value
-        entityToBePushed.getInstance(classOf[Space]) match {
-          case  Some(_) => true
-          case None => movable(entityToBePushed, entityStorage, Some(dir))
-        }
+    neighborOf(entity, dir, entityStorage) match {
+      case Some(neighbor) => childOf(neighbor, entityStorage) match {
+        case Some(ent) => // There's an entity
+          ent.getInstance(classOf[Pushable]).nonEmpty && // Is it pushable?
+            movable(ent, entityStorage, Some(dir)) // can it be pushed?
+        case None => true // There's no entity
       }
-      case None => false
+      case None => false // There's no space to move into
     }
-  }
-
-
-  def getStartingLocation(entity: Entity, entityStorage: EntityStorage): InfiniteGrid[Entity] = {
-    val gridPosition = entity.getInstance(classOf[GridPosition]).get
-    val gridEntity = entityStorage(gridPosition.gridId)
-    val grid = gridEntity.getInstance(classOf[Grid]).get
-    grid.origin.toLocation(gridPosition.x, gridPosition.y)
   }
 
   def move(entity: Entity, entityStorage: EntityStorage, direction: Option[Direction] = None): EntityStorage = {
-
-    val startingLocation = getStartingLocation(entity, entityStorage)
-
     val dir = resolveDirection(direction, entity)
 
-    val movingTo = startingLocation.toDirection(dir)
-    val movingToEntity = movingTo.value
-    movingToEntity.getInstance(classOf[Space]) match {
-      case Some(_) => forceMove(entity, entityStorage, dir)
-      case None => {
-        val newStorage = forceMove(movingToEntity, entityStorage, dir)
-        forceMove(entity, newStorage, dir)
-      }
-    }
-  }
+    val neighbor = neighborOf(entity, dir, entityStorage).get
+    val newStorage = childOf(neighbor, entityStorage).map(move(_, entityStorage, Some(dir))).getOrElse(entityStorage)
 
-  def forceMove(entity: Entity, entityStorage: EntityStorage, direction: Direction): EntityStorage = {
-    // Forces a move in the direction, removing anything that was there
-    val gridPosition: GridPosition = entity.getInstance(classOf[GridPosition]).get
-    val gridEntity: Entity = entityStorage(gridPosition.gridId)
-    val startingLocation: InfiniteGrid[Entity] = getStartingLocation(entity, entityStorage)
-
-    val updatedEntity = entity.updated(GridPosition(gridPosition.x + direction.x, gridPosition.y + direction.y, gridPosition.gridId))
-    val updatedInfGrid = startingLocation.clear().toDirection(direction).updated(updatedEntity)
-    println(entity.id + " moving from: (" + gridPosition.x + ", " + gridPosition.y + ") to: (" + updatedInfGrid._x + ", " + updatedInfGrid._y + ")")
-    entityStorage
-      .updated(gridEntity.updated(Grid(updatedInfGrid)))
-      .updated(updatedEntity)
+    val parent = parentOf(entity, newStorage).get
+    val neighborPos = neighbor(classOf[GridPosition])
+    putGridEntity(entity, neighborPos, newStorage)
+      .updated(Entities.clear(parent))
   }
 }

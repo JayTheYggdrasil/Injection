@@ -1,8 +1,7 @@
 package dev.yggdrasil.injection.framework.ecs
 
 import dev.yggdrasil.injection.framework.ecs.Component.ComponentMap
-import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, Grid, GridPosition, Space}
-import dev.yggdrasil.injection.util.InfiniteGrid
+import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction}
 
 case class Entity(id: Int, componentMap: ComponentMap){
   override def equals(obj: Any): Boolean = obj match {
@@ -31,14 +30,6 @@ object Entity {
     id += 1
     Entity(id, components.map(c => (c.getClass, c)).toMap)
   }
-
-  def gridWithEntities(entities: Set[Entity], default: (Int, Int) => Entity): Grid =
-    Grid(entities.foldLeft(new InfiniteGrid[Entity](default))((grid, ent) => {
-      ent.getInstance(classOf[GridPosition]) match {
-        case Some(pos) => grid.toLocation(pos.x, pos.y).updated(ent)
-        case None => grid
-      }
-    }))
 
   def main(args: Array[String]): Unit = {
     val e = Entity.fromComponents(Arrow(), Direction.UP)
