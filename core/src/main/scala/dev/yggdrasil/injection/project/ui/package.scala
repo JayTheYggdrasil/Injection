@@ -9,8 +9,8 @@ package object ui {
     val SPACE_SHAPE: Shape = Shape(GRID_SIZE, GRID_SIZE)
     val STEP_INTERVAL: Float = 1
     object textures {
-      val arrow: Visual = Visual(new Texture("Arrow.png"), Shape(128, 128), directed = true)
-      val space: Visual = Visual(new Texture("Space.png"), Shape(128, 128), directed = false)
+      val arrow: Visual = Visual(new Texture("Arrow.png"), Shape(128, 128), 1000, directed = true)
+      val space: Visual = Visual(new Texture("Space.png"), Shape(128, 128), 0, directed = false)
     }
   }
 }

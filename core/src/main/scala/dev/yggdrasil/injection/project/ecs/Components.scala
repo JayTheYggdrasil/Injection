@@ -1,9 +1,6 @@
 package dev.yggdrasil.injection.project.ecs
 
-import dev.yggdrasil.injection.util.{InfiniteGrid, LoopedVector}
 import dev.yggdrasil.injection.framework.ecs.Component
-import dev.yggdrasil.injection.framework.ecs.Entity
-import dev.yggdrasil.injection.framework.ecs.System.EntityStorage
 
 object Components {
   case class Direction(x: Int, y: Int) extends Component

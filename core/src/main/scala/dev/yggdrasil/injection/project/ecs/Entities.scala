@@ -53,13 +53,14 @@ object Entities {
     entities -> lookup
   }
 
-  def putGridEntity(entity: Entity, position: GridPosition, storage: EntityStorage): EntityStorage =
+  def putGridEntity(entity: Entity, position: GridPosition, storage: EntityStorage): EntityStorage = {
     spaceAt(position, storage) match {
       case Some(e) => storage
         .updated(e.updated(Space(Some(entity.id)))) // Set the spaces child ID
         .updated(entity.updated(GridEntity(e.id))) // Set the entities parent ID
       case None => storage
     }
+  }
 
 
   def clear(space: Entity): Entity = space.updated(Space(None))

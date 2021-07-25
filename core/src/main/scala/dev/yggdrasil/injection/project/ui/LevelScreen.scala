@@ -3,15 +3,14 @@ package dev.yggdrasil.injection.project.ui
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.actions.Actions
-import com.badlogic.gdx.utils.Scaling
 import dev.yggdrasil.injection.framework.ecs.Entity
 import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState, System}
 import dev.yggdrasil.injection.framework.ui.Components.{Shape, Visual}
 import dev.yggdrasil.injection.framework.ui.{ECSActor, ECSScreen}
 import dev.yggdrasil.injection.framework.util.dir2deg
-import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridEntity, GridPosition, Pushable, Space}
+import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridEntity, GridPosition}
 import dev.yggdrasil.injection.project.ecs.Entities.{arrow, emptyGrid, parentOf, putGridEntity}
-import dev.yggdrasil.injection.project.ecs.Systems.SequencedMovement
+import dev.yggdrasil.injection.project.ecs.Systems.{InputSystem, SequencedMovement}
 import dev.yggdrasil.injection.util.LoopedVector
 
 class LevelScreen extends ECSScreen {
@@ -30,18 +29,19 @@ class LevelScreen extends ECSScreen {
     storage = entities.foldLeft(storage)((s, e) => s.updated(e))
 
     // Create and add the arrows
-    val arrowEntity = arrow(Direction.UP)
-    val arrowEntity2 = arrow(Direction.RIGHT)
-
-    storage = storage.updated(arrowEntity).updated(arrowEntity2)
+    val arrowEntity = arrow(Direction.RIGHT)
+    val arrowEntity2 = arrow(Direction.DOWN)
 
     // Put the arrows in the grid
     storage = putGridEntity(arrowEntity, GridPosition(0, 0, gridID), storage)
-    storage = putGridEntity(arrowEntity2, GridPosition(0, 1, gridID), storage)
+    storage = putGridEntity(arrowEntity2, GridPosition(5, 1, gridID), storage)
 
     // Create the movement sequence
     val sequence = LoopedVector[Int](Vector(arrowEntity.id, arrowEntity2.id))
-    val systems: Set[System] = Set(SequencedMovement("sequence", Global.STEP_INTERVAL, 0, sequence))
+    val systems: Set[System] = Set(
+      SequencedMovement("sequence", Global.STEP_INTERVAL, 0, sequence),
+      InputSystem("input")
+    )
 
     GameState(storage, systems)
   }
@@ -50,7 +50,7 @@ class LevelScreen extends ECSScreen {
 
     // Make the arrows
     val renderable: Set[Entity] = created.join(classOf[Visual], classOf[Shape])
-    val actors: Set[(Int, Actor)] = renderable.map(entity => {
+    val actors: Set[(Int, ECSActor)] = renderable.map(entity => {
       val shape = entity(classOf[Shape])
       val visual = entity(classOf[Visual])
       val texture = new TextureRegion()
@@ -59,7 +59,7 @@ class LevelScreen extends ECSScreen {
       texture.setRegionWidth(visual.shape.width)
       texture.setRegionHeight(visual.shape.height)
 
-      val actor = new ECSActor(texture, () => defaultClickAction(entity))
+      val actor: ECSActor = new ECSActor(texture, () => defaultClickAction(entity), visual.zIndex)
 
       actor.setOrigin(visual.shape.width/2, visual.shape.height/2)
 
@@ -76,7 +76,8 @@ class LevelScreen extends ECSScreen {
       entity.id -> actor
     })
 
-    actors
+    // Why you no work sorting :(
+    actors.toSeq.sorted(Ordering.by[(Int, ECSActor), Int](_._2.drawOrder))
   }
 
   override def changeActors(changed: EntityStorage): Unit = {

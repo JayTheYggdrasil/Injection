@@ -5,8 +5,7 @@ import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState, S
 import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridEntity, GridPosition, Pushable, Space}
 import dev.yggdrasil.injection.project.ecs.Entities
 import dev.yggdrasil.injection.project.ecs.Entities.{childOf, neighborOf, parentOf, putGridEntity}
-import dev.yggdrasil.injection.project.ui.Global
-import dev.yggdrasil.injection.util.{InfiniteGrid, LoopedVector}
+import dev.yggdrasil.injection.util.LoopedVector
 
 
 // In order to play sequences they are aggregated into a single sequence and this system is added to the active systems
@@ -65,8 +64,11 @@ case class SequencedMovement(name: String, stepInterval: Float, current: Int, se
     neighborOf(entity, dir, entityStorage) match {
       case Some(neighbor) => childOf(neighbor, entityStorage) match {
         case Some(ent) => // There's an entity
-          ent.getInstance(classOf[Pushable]).nonEmpty && // Is it pushable?
-            movable(ent, entityStorage, Some(dir)) // can it be pushed?
+          {
+            println("Travis Sucks")
+            ent.getInstance(classOf[Pushable]).nonEmpty && // Is it pushable?
+              movable(ent, entityStorage, Some(dir)) // can it be pushed?
+          }
         case None => true // There's no entity
       }
       case None => false // There's no space to move into
@@ -81,7 +83,7 @@ case class SequencedMovement(name: String, stepInterval: Float, current: Int, se
 
     val parent = parentOf(entity, newStorage).get
     val neighborPos = neighbor(classOf[GridPosition])
-    putGridEntity(entity, neighborPos, newStorage)
-      .updated(Entities.clear(parent))
+    putGridEntity(entity, neighborPos, newStorage) // Move the entity
+      .updated(Entities.clear(parent)) // Clear the space it was in
   }
 }

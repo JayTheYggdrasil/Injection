@@ -47,6 +47,7 @@ abstract class ECSScreen extends Screen {
   }
 
   def addClick(state: GameState, id: Int): GameState = {
+    println("clicked this: " + id)
     val storage = state.entityStorage
     val entity = storage(id).updated(Clicked())
     state.copy(entityStorage = storage.updated(entity))

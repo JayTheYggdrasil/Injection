@@ -4,9 +4,6 @@ import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState}
 import dev.yggdrasil.injection.project.ecs.Components.Direction
 
 package object util {
-//  def loadLevel[G](SomeLevelRepresentation: _): GameState = {
-//    ???
-//  }
 
   val dir2deg: Map[Direction, Float] = Map(
     Direction.UP -> 0,
