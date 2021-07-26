@@ -62,6 +62,8 @@ object System {
     }
 
     def apply(id: Int): Entity = allEntities(id)
+    def contains(id: Int): Boolean = allEntities.contains(id)
+    def get(id: Int): Option[Entity] = allEntities.get(id)
   }
 
   object EntityStorage {

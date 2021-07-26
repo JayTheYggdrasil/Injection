@@ -5,14 +5,13 @@ import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState, S
 import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridEntity, GridPosition, Pushable, Space}
 import dev.yggdrasil.injection.project.ecs.Entities
 import dev.yggdrasil.injection.project.ecs.Entities.{childOf, neighborOf, parentOf, putGridEntity}
-import dev.yggdrasil.injection.util.LoopedVector
+import dev.yggdrasil.injection.util.Looped
 
 
 // In order to play sequences they are aggregated into a single sequence and this system is added to the active systems
 // When none of the entities in the sequence are able to move it removes itself from the active systems
 
-case class SequencedMovement(name: String, stepInterval: Float, current: Int, sequence: LoopedVector[Int], lastSuccessfulIndex: Int = 0, accumulatedDelta: Float = 0) extends TimedSystem {
-  val seqLength: Int = sequence.length
+case class SequencedMovement(name: String, stepInterval: Float, sequence: Looped[Int], lastSuccessfulState: Option[Looped[Int]] = None, accumulatedDelta: Float = 0) extends TimedSystem {
 
   override def apply(delta: Float, gameState: GameState): GameState = {
     val entityStorage = gameState.entityStorage
@@ -20,29 +19,36 @@ case class SequencedMovement(name: String, stepInterval: Float, current: Int, se
 
     val systemsWithoutMe: Set[System] = active - this
 
-    if (!shouldStep) {
-      val sys: System = copy(accumulatedDelta = accumulatedDelta + delta)
-      return gameState.copy(entityStorage, systemsWithoutMe + sys)
-    }
+    // Prepare the fail state if necessary
+    lazy val sys: System = copy(accumulatedDelta = accumulatedDelta + delta)
+    lazy val failState = gameState.copy(entityStorage, systemsWithoutMe + sys)
 
-    // Try do the current entity's action. If that fails, try to do it for the next entity in the sequence
-    val entityId: Int = sequence(current)
+    if (!shouldStep) return failState
 
-    val entity: Entity = entityStorage(entityId)
-
-    // The entity must be on a grid
-    assert(entity.getInstance(classOf[GridEntity]).nonEmpty)
+    val entityId: Int = sequence.get
 
     // Deactivate if nothing in the sequence is able to move
-    if (lastSuccessfulIndex % seqLength == current % seqLength && !movable(entity, entityStorage))
+    if (lastSuccessfulState.nonEmpty && lastSuccessfulState.get == sequence) {
+      println(name + ": DEACTIVATING")
       return gameState.copy(entityStorage, systemsWithoutMe)
+    }
 
+    // -- Skip conditions
+    lazy val skipResult = copy(sequence = sequence.next)(delta, gameState)
 
+    // If the entity doesn't exist skip it
+    val entity: Entity = entityStorage.get(entityId)
+      .getOrElse(return skipResult)
+
+    // Skip if the entity isn't on a grid, skip it
+    entity.getInstance(classOf[GridEntity]).getOrElse(return skipResult)
+
+    // Try to move, skip on failure
     val (newMe, updatedStorage) = tryMove(entity, entityStorage) match {
-      case Some(es) => // Move is a success
-        copy(current = current + 1, lastSuccessfulIndex = current, accumulatedDelta = 0) -> es
-      case None => // Move is a failure
-        return copy(current = current + 1)(delta, gameState)
+      case Some(es) =>
+        copy(sequence = sequence.next, lastSuccessfulState = Some(sequence), accumulatedDelta = 0) -> es
+      case None =>
+        return skipResult
     }
 
 
@@ -64,11 +70,8 @@ case class SequencedMovement(name: String, stepInterval: Float, current: Int, se
     neighborOf(entity, dir, entityStorage) match {
       case Some(neighbor) => childOf(neighbor, entityStorage) match {
         case Some(ent) => // There's an entity
-          {
-            println("Travis Sucks")
             ent.getInstance(classOf[Pushable]).nonEmpty && // Is it pushable?
               movable(ent, entityStorage, Some(dir)) // can it be pushed?
-          }
         case None => true // There's no entity
       }
       case None => false // There's no space to move into
