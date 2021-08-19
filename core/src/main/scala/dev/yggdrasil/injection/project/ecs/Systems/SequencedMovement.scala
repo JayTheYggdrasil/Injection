@@ -2,10 +2,11 @@ package dev.yggdrasil.injection.project.ecs.Systems
 
 import dev.yggdrasil.injection.framework.ecs.Entity
 import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState, System}
+import dev.yggdrasil.injection.framework.util.loadState
 import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridEntity, GridPosition, Pushable, Space}
 import dev.yggdrasil.injection.project.ecs.Entities
 import dev.yggdrasil.injection.project.ecs.Entities.{childOf, neighborOf, parentOf, putGridEntity}
-import dev.yggdrasil.injection.util.Looped
+import dev.yggdrasil.injection.util.{Looped, LoopedList}
 
 
 // In order to play sequences they are aggregated into a single sequence and this system is added to the active systems
@@ -19,20 +20,19 @@ case class SequencedMovement(name: String, stepInterval: Float, sequence: Looped
 
     val systemsWithoutMe: Set[System] = active - this
 
-    // Prepare the fail state if necessary
-    lazy val sys: System = copy(accumulatedDelta = accumulatedDelta + delta)
-    lazy val failState = gameState.copy(entityStorage, systemsWithoutMe + sys)
+    if (!shouldStep) {
+      // It's not time to execute just yet
+      val sys = copy(accumulatedDelta = accumulatedDelta + delta)
+      return gameState.copy(entityStorage, systemsWithoutMe + sys)
+    }
 
-    if (!shouldStep) return failState
-
-    val entityId: Int = sequence.get
-
-    // Deactivate if nothing in the sequence is able to move
-    if (lastSuccessfulState.nonEmpty && lastSuccessfulState.get == sequence) {
+    // Deactivate if the sequence is empty or if nothing can move
+    if (sequence == LoopedList(Nil) || (lastSuccessfulState.nonEmpty && lastSuccessfulState.get == sequence)) {
       println(name + ": DEACTIVATING")
       return gameState.copy(entityStorage, systemsWithoutMe)
     }
 
+    val entityId: Int = sequence.get
     // -- Skip conditions
     lazy val skipResult = copy(sequence = sequence.next)(delta, gameState)
 

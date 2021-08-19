@@ -1,25 +1,32 @@
 package dev.yggdrasil.injection.project.ui
 
-import com.badlogic.gdx.graphics.g2d.TextureRegion
-import com.badlogic.gdx.scenes.scene2d.Actor
-import com.badlogic.gdx.scenes.scene2d.actions.Actions
 import dev.yggdrasil.injection.framework.ecs.Entity
 import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState, System}
-import dev.yggdrasil.injection.framework.ui.Components.{Shape, Visual}
-import dev.yggdrasil.injection.framework.ui.{ECSActor, ECSScreen}
-import dev.yggdrasil.injection.framework.util.dir2deg
-import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridEntity, GridPosition}
-import dev.yggdrasil.injection.project.ecs.Entities.{arrow, emptyGrid, parentOf, putGridEntity}
-import dev.yggdrasil.injection.project.ecs.Systems.{InputSystem, SequencedMovement}
+import dev.yggdrasil.injection.framework.ui.{ECSActorFactory, ECSScreen}
+import dev.yggdrasil.injection.project.ecs.Components.{Direction, GridPosition}
+import dev.yggdrasil.injection.project.ecs.Entities.{arrow, emptyGrid, putGridEntity}
+import dev.yggdrasil.injection.project.ecs.Systems.{EditorSystem, SequencedMovement}
+import dev.yggdrasil.injection.project.ui.actors.ActorFactory
 import dev.yggdrasil.injection.util.{Looped, LoopedList}
 
 class LevelScreen extends ECSScreen {
-  override type Globals = this.type
+  override def initialState: GameState = LevelScreen.initialState
 
-  override def initialState: GameState = {
-    // Should load a level from a file
-    // For now it's just a test level
+  override def resize(width: Int, height: Int): Unit = ()
 
+  override def pause(): Unit = ()
+
+  override def resume(): Unit = ()
+
+  override def hide(): Unit = ()
+
+  override def dispose(): Unit = ()
+
+  override protected val actorFactory: ECSActorFactory = ActorFactory
+}
+
+object LevelScreen {
+  def initialState: GameState = {
     var storage = EntityStorage.empty
     val gridEntity = Entity.fromComponents()
     val gridID = gridEntity.id
@@ -40,66 +47,9 @@ class LevelScreen extends ECSScreen {
     val sequence: Looped[Int] = LoopedList(List(arrowEntity.id, arrowEntity2.id))
     val systems: Set[System] = Set(
       SequencedMovement("sequence", Global.STEP_INTERVAL, sequence),
-      InputSystem("input")
+      EditorSystem("input")
     )
 
     GameState(storage, systems)
   }
-
-  override def makeActors(created: EntityStorage): Iterable[(Int, Actor)] = {
-
-    // Make the arrows
-    val renderable: Set[Entity] = created.join(classOf[Visual], classOf[Shape])
-    val actors: Set[(Int, ECSActor)] = renderable.map(entity => {
-      val shape = entity(classOf[Shape])
-      val visual = entity(classOf[Visual])
-      val texture = new TextureRegion()
-      texture.setTexture(visual.texture)
-
-      texture.setRegionWidth(visual.shape.width)
-      texture.setRegionHeight(visual.shape.height)
-
-      val actor: ECSActor = new ECSActor(texture, () => defaultClickAction(entity), visual.zIndex)
-
-      actor.setOrigin(visual.shape.width/2, visual.shape.height/2)
-
-      actor.setScaleX(shape.width.toFloat/visual.shape.width)
-      actor.setScaleY(shape.height.toFloat/visual.shape.height)
-
-      if(visual.directed)
-        actor.setRotation(dir2deg(entity(classOf[Direction])))
-
-      val pos = entity.getInstance(classOf[GridPosition]).getOrElse(
-        parentOf(entity, gameState.entityStorage).get(classOf[GridPosition])
-      )
-      actor.setPosition(pos.x * shape.width, pos.y * shape.height)
-      entity.id -> actor
-    })
-
-    // Why you no work sorting :(
-    actors.toSeq.sorted(Ordering.by[(Int, ECSActor), Int](_._2.drawOrder))
-  }
-
-  override def changeActors(changed: EntityStorage): Unit = {
-    val gridEntities = changed.join(classOf[GridEntity], classOf[Visual], classOf[Shape])
-    gridEntities.foreach(entity => {
-      val pos = parentOf(entity, gameState.entityStorage).get(classOf[GridPosition])
-      val shape = entity(classOf[Shape])
-      actors.fromEntity(entity).foreach(_.addAction(Actions.moveTo(
-        pos.x * shape.width,
-        pos.y * shape.height,
-        Global.STEP_INTERVAL
-      )))
-    })
-  }
-
-  override def resize(width: Int, height: Int): Unit = ()
-
-  override def pause(): Unit = ()
-
-  override def resume(): Unit = ()
-
-  override def hide(): Unit = ()
-
-  override def dispose(): Unit = ()
 }

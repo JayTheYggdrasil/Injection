@@ -1,7 +1,11 @@
 package dev.yggdrasil.injection.framework
 
+import dev.yggdrasil.injection.framework.ecs.Entity
 import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState}
+import dev.yggdrasil.injection.framework.ui.Components.Visual
 import dev.yggdrasil.injection.project.ecs.Components.Direction
+
+import java.io.{FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
 
 package object util {
 
@@ -12,24 +16,40 @@ package object util {
     Direction.RIGHT -> 270
   )
 
-  def StateDifferences[G](state1: GameState, state2: GameState): (EntityStorage, EntityStorage, EntityStorage) = {
-    val s1 = state1.entityStorage
-    val s2 = state2.entityStorage
+  def StateVisualDifferences[G](state1: GameState, state2: GameState): (Set[Entity], Set[Entity], Set[Entity]) = {
+    val s1: EntityStorage = state1.entityStorage
+    val s2: EntityStorage = state2.entityStorage
 
     val a1 = state1.systems
     val a2 = state2.systems
 
     // Added
-    val newEntities = s2.allEntities.values.toSet -- s1.allEntities.values.toSet
-    val addedStorage: EntityStorage = newEntities.foldLeft(EntityStorage.empty)((storage, e) => storage.updated(e))
+    val newEntities = s2.join(classOf[Visual]) -- s1.join(classOf[Visual])
 
     // Removed
-    val removedEntities = s1.allEntities.values.toSet -- s2.allEntities.values.toSet
-    val removedStorage: EntityStorage = removedEntities.foldLeft(EntityStorage.empty)((storage, e) => storage.updated(e))
+    val removedEntities = s1.join(classOf[Visual]) -- s2.join(classOf[Visual])
 
     // Changed
-    val changedStorage: EntityStorage = s2.changedEntities.foldLeft(EntityStorage.empty)((storage, e) => storage.updated(e))
+    val changedEntities: Set[Entity] = s2.changedEntities intersect s2.join(classOf[Visual])
 
-    (addedStorage, removedStorage, changedStorage)
+    (newEntities, removedEntities, changedEntities)
+  }
+
+  def saveState(name: String, state: GameState): Unit = {
+    val saveLoc: String = System.getProperty("user.home").concat("\\Documents\\My Games\\injection\\" + name)
+
+    val oos = new ObjectOutputStream(new FileOutputStream(saveLoc))
+    oos.writeObject(state)
+    oos.close()
+  }
+
+  def loadState(name: String): GameState = {
+    val saveLoc: String = System.getProperty("user.home").concat("\\Documents\\My Games\\injection\\" + name)
+    val ois = new ObjectInputStream(new FileInputStream(saveLoc))
+    val output = ois.readObject().asInstanceOf[GameState]
+
+    ois.close()
+
+    output
   }
 }

@@ -24,6 +24,9 @@ object Entities {
   def parentOf(entity: Entity, storage: EntityStorage): Option[Entity] =
     entity.getInstance(classOf[GridEntity]).map(g => storage(g.parentID))
 
+  def onGrid(entity: Entity): Boolean =
+    entity.componentMap.contains(classOf[GridEntity])
+
   def neighborOf(entity: Entity, direction: Direction, storage: EntityStorage): Option[Entity] =
     parentOf(entity, storage).flatMap(e => {
       val pos = e(classOf[GridPosition])

@@ -1,14 +1,29 @@
 package dev.yggdrasil.injection.framework.ui
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion
-import com.badlogic.gdx.scenes.scene2d.{Actor, InputEvent}
-import com.badlogic.gdx.scenes.scene2d.ui.Image
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
+import dev.yggdrasil.injection.framework.ecs.Entity
+import dev.yggdrasil.injection.framework.ecs.System.GameState
+import dev.yggdrasil.injection.framework.ui.Components.Visual
 
-class ECSActor(val texture: TextureRegion, val onClick: () => Unit, val drawOrder: Int) extends Image(texture) {
-  setWidth(texture.getRegionWidth)
-  setHeight(texture.getRegionHeight)
-  addListener(new ClickListener() {
-    override def clicked(event: InputEvent, x: Float, y: Float): Unit = onClick()
-  })
+abstract class ECSActor protected(val id: Int, texture: TextureRegion) extends EventActor(texture)
+{
+  def update(gameState: GameState): Unit
+
+  override def remove(): Boolean = {
+    super.getStage match {
+      case fancy: EntityStage => fancy.removeActor(this)
+      case _ => ()
+    }
+
+    super.remove()
+  }
+
+  def scaleMultiply(scaleX: Float, scaleY: Float): Unit =
+    setScale(scaleX * getScaleX, scaleY * getScaleY)
+}
+
+trait ECSActorFactory {
+  def appliesTo(gameState: GameState): Set[Entity] = gameState.entityStorage.join(classOf[Visual])
+  def makeOne(entity: Entity, gameState: GameState): ECSActor
+  def makeActors(gameState: GameState): Set[ECSActor] = appliesTo(gameState).map(makeOne(_, gameState))
 }
