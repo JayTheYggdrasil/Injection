@@ -5,7 +5,7 @@ import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState, S
 import dev.yggdrasil.injection.framework.ui.{ECSActorFactory, ECSScreen}
 import dev.yggdrasil.injection.project.ecs.Components.{Direction, GridPosition}
 import dev.yggdrasil.injection.project.ecs.Entities.{arrow, emptyGrid, putGridEntity}
-import dev.yggdrasil.injection.project.ecs.Systems.{EditorSystem, SequencedMovement}
+import dev.yggdrasil.injection.project.ecs.Systems.{EditorSystem, MovementSystem}
 import dev.yggdrasil.injection.project.ui.actors.ActorFactory
 import dev.yggdrasil.injection.util.{Looped, LoopedList}
 
@@ -35,18 +35,18 @@ object LevelScreen {
 
     storage = entities.foldLeft(storage)((s, e) => s.updated(e))
 
-    // Create and add the arrows
-    val arrowEntity = arrow(Direction.UP)
-    val arrowEntity2 = arrow(Direction.UP)
-
-    // Put the arrows in the grid
-    storage = putGridEntity(arrowEntity, GridPosition(0, 0, gridID), storage)
-    storage = putGridEntity(arrowEntity2, GridPosition(0, 1, gridID), storage)
+//    // Create and add the arrows
+//    val arrowEntity = arrow(Direction.UP)
+//    val arrowEntity2 = arrow(Direction.UP)
+//
+//    // Put the arrows in the grid
+//    storage = putGridEntity(arrowEntity, GridPosition(0, 0, gridID), storage)
+//    storage = putGridEntity(arrowEntity2, GridPosition(0, 1, gridID), storage)
 
     // Create the movement sequence
-    val sequence: Looped[Int] = LoopedList(List(arrowEntity.id, arrowEntity2.id))
+//    val sequence: Looped[Int] = LoopedList(List(arrowEntity.id, arrowEntity2.id))
     val systems: Set[System] = Set(
-      SequencedMovement("sequence", Global.STEP_INTERVAL, sequence),
+//      MovementSystem("sequence", Global.STEP_INTERVAL, sequence),
       EditorSystem("input")
     )
 

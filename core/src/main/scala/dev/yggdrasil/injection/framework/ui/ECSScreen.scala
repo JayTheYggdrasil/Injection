@@ -7,6 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.{Actor, Stage}
 import com.badlogic.gdx.utils.viewport.Viewport
 import com.badlogic.gdx.utils.viewport.StretchViewport
 import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState, stepState}
+import dev.yggdrasil.injection.framework.events.EventController
 import dev.yggdrasil.injection.framework.ui.Components.Visual
 import dev.yggdrasil.injection.framework.util.StateVisualDifferences
 
@@ -31,7 +32,10 @@ abstract class ECSScreen extends Screen {
     // Make the initial visuals then add them to the screen's stage.
     actorFactory.makeActors(gameState).foreach(stage.addActor)
 
-    Gdx.input.setInputProcessor(stage)
+    val processor = new EventController
+    processor.addProcessor(stage)
+    Gdx.input.setInputProcessor(processor)
+
   }
 
   def initialState: GameState

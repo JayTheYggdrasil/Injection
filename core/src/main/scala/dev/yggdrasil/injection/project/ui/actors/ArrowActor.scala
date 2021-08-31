@@ -1,5 +1,6 @@
 package dev.yggdrasil.injection.project.ui.actors
 
+import com.badlogic.gdx.Input.Keys
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.actions.Actions
@@ -8,8 +9,9 @@ import dev.yggdrasil.injection.framework.ecs.{Entity, System}
 import dev.yggdrasil.injection.framework.events.Event
 import dev.yggdrasil.injection.framework.ui.Components.Visual
 import dev.yggdrasil.injection.framework.ui.ECSActor
-import dev.yggdrasil.injection.project.Events.{MakeArrow, Select}
-import dev.yggdrasil.injection.project.ecs.Components.{Arrow, GridPosition}
+import dev.yggdrasil.injection.framework.util.dir2deg
+import dev.yggdrasil.injection.project.Events.{IndexDown, IndexUp, TurnEntityLeft, TurnEntityRight}
+import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridPosition}
 import dev.yggdrasil.injection.project.ecs.Entities.parentOf
 import dev.yggdrasil.injection.project.ui.Global
 
@@ -30,6 +32,13 @@ object ArrowActor {
 
     // Define the new actor
     val actor = new GridActor(entity.id, textureRegion) {
+      override val hoverEvents: Map[Int, Event] = Map(
+        Keys.A -> TurnEntityLeft(entity.id),
+        Keys.D -> TurnEntityRight(entity.id),
+        Keys.W -> IndexUp(entity.id),
+        Keys.S -> IndexDown(entity.id)
+      )
+
       override def update(gameState: GameState): Unit = {
         val me = gameState.entityStorage(id)
         val parent = parentOf(me, gameState.entityStorage)
@@ -37,11 +46,14 @@ object ArrowActor {
           val pos = p(classOf[GridPosition])
           addAction(Actions.moveTo(pos.x * Global.GRID_SIZE, pos.y * Global.GRID_SIZE, Global.STEP_INTERVAL))
         })
+
+        println(me(classOf[Direction]))
+        setRotation(dir2deg(me(classOf[Direction])))
       }
 
       override def onEnter: Event = {
         scaleMultiply(1.2f, 1.2f)
-        Select(id)
+        super.onEnter
       }
 
       override def onExit: Event = {

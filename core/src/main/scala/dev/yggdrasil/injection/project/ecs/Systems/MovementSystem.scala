@@ -12,7 +12,7 @@ import dev.yggdrasil.injection.util.{Looped, LoopedList}
 // In order to play sequences they are aggregated into a single sequence and this system is added to the active systems
 // When none of the entities in the sequence are able to move it removes itself from the active systems
 
-case class SequencedMovement(name: String, stepInterval: Float, sequence: Looped[Int], lastSuccessfulState: Option[Looped[Int]] = None, accumulatedDelta: Float = 0) extends TimedSystem {
+case class MovementSystem(name: String, stepInterval: Float, sequence: Looped[Int], lastSuccessfulState: Option[Looped[Int]] = None, accumulatedDelta: Float = 0) extends TimedSystem {
 
   override def apply(delta: Float, gameState: GameState): GameState = {
     val entityStorage = gameState.entityStorage
