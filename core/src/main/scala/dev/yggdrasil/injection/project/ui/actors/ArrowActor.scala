@@ -64,7 +64,10 @@ object ArrowActor {
 
     // Set it's position
     val pos = parentOf(entity, gameState.entityStorage).get(classOf[GridPosition])
-    actor.setPosition((pos.x * Global.GRID_SIZE).toFloat, (pos.y * Global.GRID_SIZE).toFloat)
+    actor.setPosition(
+      (pos.x * Global.GRID_SIZE).toFloat,
+      (pos.y * Global.GRID_SIZE).toFloat
+    )
 
     actor
   }

@@ -13,7 +13,7 @@ abstract class GridActor(override val id: Int, texture: TextureRegion) extends E
   protected val txtSide: Float = texture.getTexture.getWidth.toFloat
   setScaleX(Global.GRID_SIZE/txtSide)
   setScaleY(Global.GRID_SIZE/txtSide)
-  setOrigin(Global.GRID_SIZE/2, Global.GRID_SIZE/2)
+  setOrigin(getHeight/2, getWidth/2)
 
   override def update(gameState: GameState): Unit = {
     val storage = gameState.entityStorage
