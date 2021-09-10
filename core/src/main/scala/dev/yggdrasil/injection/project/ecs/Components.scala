@@ -14,7 +14,7 @@ object Components {
 
   case class Arrow() extends Component
 
-  case class Sequence(loopID: Int, loop: LoopedList[Int]) extends Component
+  case class Sequence(loopID: Int, next: Option[Int], previous: Option[Int]) extends Component
 
   case class GridPosition(x: Int, y: Int, gridId: Int) extends Component
 
