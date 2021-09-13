@@ -5,7 +5,7 @@ import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState, S
 import dev.yggdrasil.injection.framework.events.EventController
 import dev.yggdrasil.injection.project.Events.{MakeArrow, TurnEntityLeft, TurnEntityRight}
 import dev.yggdrasil.injection.project.ecs.Components.{Direction, GridEntity, GridPosition, Space}
-import dev.yggdrasil.injection.project.ecs.Entities.{arrow, childOf, parentOf, putGridEntity}
+import dev.yggdrasil.injection.project.ecs.Entities.{arrow, childOf, parentOf, putGridEntity, sequenceAppend}
 
 case class EditorSystem(name: String) extends System {
   override def apply(delta: Float, gameState: GameState): GameState = {
@@ -13,6 +13,10 @@ case class EditorSystem(name: String) extends System {
     val b = rotateEntitiesLeft(a)
     rotateEntitiesRight(b)
   }
+
+  def IndexUp(gameState: GameState): GameState = ???
+
+  def IndexDown(gameState: GameState): GameState = ???
 
   def makeArrows(gameState: GameState): GameState = {
     val (storage, _) = gameState.unpack
@@ -30,7 +34,9 @@ case class EditorSystem(name: String) extends System {
     // Create new arrows for each space clicked.
     val newStorage = clickedSpaces.foldLeft(storage)((s, space) => {
       val newArrow = arrow(Direction.UP)
-      putGridEntity(newArrow, space(classOf[GridPosition]), s)
+      val onGrid = putGridEntity(newArrow, space(classOf[GridPosition]), s)
+      val inSequence = sequenceAppend(onGrid(newArrow.id), 1, onGrid)
+      inSequence
     })
 
 

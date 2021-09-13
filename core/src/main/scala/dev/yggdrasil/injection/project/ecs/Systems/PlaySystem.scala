@@ -36,7 +36,7 @@ case class PlaySystem(name: String) extends System {
     // Not super efficient, more book keeping would help, but it should work.
     val sequencedEntities = gameState.entityStorage.join(classOf[Sequence])
     val starts = sequencedEntities.filter(e => e(classOf[Sequence]) match {
-      case Sequence(_, Some(_), None) => true
+      case Sequence(_, _, None, _) => true
       case _ => false
     })
     Looped.combine(starts.map(e => LoopedList(travel(e, gameState))).toList)
@@ -44,8 +44,8 @@ case class PlaySystem(name: String) extends System {
 
   def travel(entity: Entity, gameState: GameState): List[Int] = {
     entity(classOf[Sequence]) match {
-      case Sequence(_, Some(next), _) => entity.id :: travel(gameState.entityStorage(next), gameState)
-      case _ => Nil
+      case Sequence(_, _, _, Some(next)) => entity.id :: travel(gameState.entityStorage(next), gameState)
+      case _ => entity.id :: Nil
     }
   }
 }

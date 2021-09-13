@@ -10,7 +10,7 @@ import dev.yggdrasil.injection.framework.events.Event
 import dev.yggdrasil.injection.framework.ui.Components.Visual
 import dev.yggdrasil.injection.framework.ui.ECSActor
 import dev.yggdrasil.injection.framework.util.dir2deg
-import dev.yggdrasil.injection.project.Events.{IndexDown, IndexUp, TurnEntityLeft, TurnEntityRight}
+import dev.yggdrasil.injection.project.Events.{IndexDown, IndexUp, Play, TurnEntityLeft, TurnEntityRight}
 import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridPosition}
 import dev.yggdrasil.injection.project.ecs.Entities.parentOf
 import dev.yggdrasil.injection.project.ui.Global
@@ -50,6 +50,8 @@ object ArrowActor {
         println(me(classOf[Direction]))
         setRotation(dir2deg(me(classOf[Direction])))
       }
+
+      override def onClick: Event = Play()
 
       override def onEnter: Event = {
         scaleMultiply(1.2f, 1.2f)

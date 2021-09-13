@@ -2,15 +2,16 @@ package dev.yggdrasil.injection.project.ecs
 
 import dev.yggdrasil.injection.framework.ecs.Entity
 import dev.yggdrasil.injection.framework.ecs.System.EntityStorage
-import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridEntity, GridPosition, Pushable, Space}
+import dev.yggdrasil.injection.framework.ui.Components.Visual
+import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridEntity, GridPosition, Pushable, Sequence, Space}
 import dev.yggdrasil.injection.project.ui
 
 object Entities {
   def emptySpace(x: Int, y: Int, gridID: Int): Entity = Entity.fromComponents(
-    ui.Global.textures.space,
     ui.Global.SPACE_SHAPE,
     Space(None),
-    GridPosition(x, y, gridID)
+    GridPosition(x, y, gridID),
+    Visual()
   )
 
   def arrow(direction: Direction): Entity = Entity.fromComponents(
@@ -18,7 +19,12 @@ object Entities {
     direction,
     Pushable(),
     ui.Global.SPACE_SHAPE,
-    ui.Global.textures.arrow
+    Visual()
+  )
+
+  def uiArrow(): Entity = Entity.fromComponents(
+    ui.Global.SPACE_SHAPE,
+//    MakeRule(gameState => arrow(Direction.UP))
   )
 
   def parentOf(entity: Entity, storage: EntityStorage): Option[Entity] =
@@ -65,6 +71,21 @@ object Entities {
     }
   }
 
+  def sequenceAppend(entity: Entity, sequenceID: Int, storage: EntityStorage): EntityStorage = {
+    val lastInSeq = storage.join(classOf[Sequence]).find(e => e(classOf[Sequence]) match {
+      case Sequence(id,_, _, None) if id == sequenceID => true
+      case _ => false
+    })
+
+    lastInSeq match {
+      case Some(e) => {
+        val seq = e(classOf[Sequence])
+        storage.updated(e.updated(seq.copy(next = Some(entity.id))))
+          .updated(entity.updated(Sequence(sequenceID, seq.index + 1, Some(e.id), None)))
+      }
+      case None => storage.updated(entity.updated(Sequence(sequenceID, 0, None, None)))
+    }
+  }
 
   def clear(space: Entity): Entity = space.updated(Space(None))
 }
