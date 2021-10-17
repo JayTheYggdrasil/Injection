@@ -3,12 +3,11 @@ package dev.yggdrasil.injection.framework.ui
 import com.badlogic.gdx.{Gdx, Screen}
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
-import com.badlogic.gdx.scenes.scene2d.{Actor, Stage}
 import com.badlogic.gdx.utils.viewport.Viewport
 import com.badlogic.gdx.utils.viewport.StretchViewport
-import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState, stepState}
+import dev.yggdrasil.injection.framework.ecs.GameState
+import dev.yggdrasil.injection.framework.ecs.System.stepState
 import dev.yggdrasil.injection.framework.events.EventController
-import dev.yggdrasil.injection.framework.ui.Components.Visual
 import dev.yggdrasil.injection.framework.util.StateVisualDifferences
 
 abstract class ECSScreen extends Screen {
@@ -42,6 +41,9 @@ abstract class ECSScreen extends Screen {
 
   override def render(delta: Float): Unit = {
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+
+    // Add input events
+    gameState = gameState.storage -> EventController.consumeAll().foldLeft(gameState.systems)((ss, s) => ss.appended(s))
 
     // Update the game state
     val newState = stepState(delta, gameState.clearChanged())

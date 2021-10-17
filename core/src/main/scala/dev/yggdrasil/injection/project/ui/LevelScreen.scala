@@ -1,11 +1,8 @@
 package dev.yggdrasil.injection.project.ui
 
-import dev.yggdrasil.injection.framework.ecs.Entity
-import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState, System}
+import dev.yggdrasil.injection.framework.ecs.{Entity, EntityStorage, GameState, System}
 import dev.yggdrasil.injection.framework.ui.{ECSActorFactory, ECSScreen}
-import dev.yggdrasil.injection.project.ecs.Components.{Direction, GridPosition}
 import dev.yggdrasil.injection.project.ecs.Entities.{arrow, emptyGrid, putGridEntity}
-import dev.yggdrasil.injection.project.ecs.Systems.{EditorSystem, MovementSystem, PlaySystem}
 import dev.yggdrasil.injection.project.ui.actors.ActorFactory
 import dev.yggdrasil.injection.util.{Looped, LoopedList}
 
@@ -45,11 +42,7 @@ object LevelScreen {
 
     // Create the movement sequence
 //    val sequence: Looped[Int] = LoopedList(List(arrowEntity.id, arrowEntity2.id))
-    val systems: Set[System] = Set(
-//      MovementSystem("sequence", Global.STEP_INTERVAL, sequence),
-      EditorSystem("input"),
-      PlaySystem("play")
-    )
+    val systems: List[System] = Nil
 
     GameState(storage, systems)
   }

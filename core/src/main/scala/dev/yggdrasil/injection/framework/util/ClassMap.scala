@@ -1,7 +1,6 @@
 package dev.yggdrasil.injection.framework.util
 
 case class ClassMap[Super] protected(classStore: Map[String, Set[_ <: Super]] = Map.empty) {
-
   private def getWithName[C](clssName: String): Option[Set[C]] = classStore.get(clssName).asInstanceOf[Option[Set[C]]]
 
   def apply[C <: Super](clss: Class[C]): Set[C] = getWithName[C](clss.getName).getOrElse(Set.empty)
@@ -17,6 +16,14 @@ case class ClassMap[Super] protected(classStore: Map[String, Set[_ <: Super]] = 
     val store = classStore.updated(value.getClass.getName, set + value)
     ClassMap(store)
   }
+
+  def mapSame(mapFunc: Super => Option[Super]): ClassMap[Super] = copy(classStore.map(e => {
+    val (k, v) = e
+    k -> v.flatMap(mapFunc)
+  }))
+
+  def foreach(f: Super => Unit): Unit = classStore.values.foreach(_.foreach(f))
+
 }
 
 object ClassMap {

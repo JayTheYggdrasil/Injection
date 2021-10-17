@@ -2,11 +2,11 @@ package dev.yggdrasil.injection.project.ui.actors
 
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureRegion
-import dev.yggdrasil.injection.framework.ecs.{Entity, System}
-import dev.yggdrasil.injection.framework.events.Event
+import dev.yggdrasil.injection.framework.ecs.Systems.EventSystem
+import dev.yggdrasil.injection.framework.ecs.{Entity, GameState}
 import dev.yggdrasil.injection.framework.ui.ECSActor
-import dev.yggdrasil.injection.project.Events.MakeArrow
 import dev.yggdrasil.injection.project.ecs.Components.{GridPosition, Space}
+import dev.yggdrasil.injection.project.ecs.Systems.EditorSystems.MakeArrow
 import dev.yggdrasil.injection.project.ui.Global
 
 
@@ -24,8 +24,8 @@ object SpaceActor {
 
     // Define the new actor
     val actor = new GridActor(entity.id, textureRegion) {
-      override def update(gameState: System.GameState): Unit = ()
-      override def onClick: Event = MakeArrow(entity.id)
+      override def update(gameState: GameState): Unit = ()
+      override def onClick: EventSystem = MakeArrow(entity.id)
     }
 
     // Set it's position

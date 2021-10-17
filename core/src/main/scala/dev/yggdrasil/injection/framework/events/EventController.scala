@@ -1,9 +1,10 @@
 package dev.yggdrasil.injection.framework.events
 
 import com.badlogic.gdx.InputMultiplexer
+import dev.yggdrasil.injection.framework.ecs.GameState
+import dev.yggdrasil.injection.framework.ecs.Systems.EventSystem
 import dev.yggdrasil.injection.framework.events.EventController.useBind
 import dev.yggdrasil.injection.framework.ui.EventActor
-import dev.yggdrasil.injection.framework.util.ClassMap
 
 class EventController extends InputMultiplexer {
   override def keyDown(keycode: Int): Boolean = {
@@ -14,28 +15,27 @@ class EventController extends InputMultiplexer {
 }
 
 object EventController {
-  case class UnitEvent() extends Event
-  case class Select(entityID: Int) extends Event
-  case class Deselect(entityID: Int) extends Event
-
-  private var hovered: Option[EventActor] = None
-  private var events = ClassMap.empty[Event]
-
-  def apply[A <: Event](clss: Class[A]): Set[A] = events(clss)
-
-  private var inputMap: Map[Int, Event] = Map.empty
-
-  def add[C <: Event](value: C): Unit = value match {
-    case _: UnitEvent => ()
-    case _ => {
-      println(value)
-      events = events.add[C](value)
-    }
+  case class UnitEvent() extends EventSystem("Unit") {
+    override def handleEvent(gameState: GameState): GameState = gameState
   }
 
-  def remove[C <: Event](value: C): Unit = events = events.remove[C](value)
+  private var hovered: Option[EventActor] = None
+  private var events: List[EventSystem] = Nil
 
-  def bind(keycode: Int, event: Event): Unit = inputMap = inputMap.updated(keycode, event)
+  private var inputMap: Map[Int, EventSystem] = Map.empty
+
+  def add(value: EventSystem): Unit = value match {
+    case _: UnitEvent => ()
+    case _ => events = events.appended(value)
+  }
+
+  def consumeAll(): List[EventSystem] = {
+    val e = events
+    events = Nil
+    e
+  }
+
+  def bind(keycode: Int, event: EventSystem): Unit = inputMap = inputMap.updated(keycode, event)
 
   def setHover(actor: EventActor): Unit = hovered = Some(actor)
 

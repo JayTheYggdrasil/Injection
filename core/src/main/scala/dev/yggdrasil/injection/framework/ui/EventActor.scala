@@ -1,10 +1,12 @@
 package dev.yggdrasil.injection.framework.ui
 
+import com.badlogic.gdx.Input.Buttons
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.{Actor, InputEvent}
 import com.badlogic.gdx.scenes.scene2d.ui.Image
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
-import dev.yggdrasil.injection.framework.events.{Event, EventController}
+import dev.yggdrasil.injection.framework.ecs.Systems.EventSystem
+import dev.yggdrasil.injection.framework.events.EventController
 import dev.yggdrasil.injection.framework.events.EventController.UnitEvent
 
 abstract class EventActor(texture: TextureRegion) extends Image(texture) {
@@ -12,11 +14,12 @@ abstract class EventActor(texture: TextureRegion) extends Image(texture) {
   setWidth(texture.getRegionWidth.toFloat)
   setHeight(texture.getRegionHeight.toFloat)
 
-  val hoverEvents: Map[Int, Event] = Map.empty
+  val hoverEvents: Map[Int, EventSystem] = Map.empty
 
-  def onClick: Event = UnitEvent()
-  def onEnter: Event = UnitEvent()
-  def onExit: Event = UnitEvent()
+  def onClick: EventSystem = UnitEvent()
+  def onRightClick: EventSystem = UnitEvent()
+  def onEnter: EventSystem = UnitEvent()
+  def onExit: EventSystem = UnitEvent()
 
   addListener(new ClickListener() {
     override def clicked(event: InputEvent, x: Float, y: Float): Unit = EventController.add(onClick)
@@ -30,5 +33,9 @@ abstract class EventActor(texture: TextureRegion) extends Image(texture) {
       EventController.add(onExit)
       EventController.removeHover(that)
     }
+  })
+
+  addListener(new ClickListener(Buttons.RIGHT) {
+    override def clicked(event: InputEvent, x: Float, y: Float): Unit = EventController.add(onRightClick)
   })
 }

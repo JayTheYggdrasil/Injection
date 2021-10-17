@@ -1,7 +1,6 @@
 package dev.yggdrasil.injection.project.ui.actors
 
-import dev.yggdrasil.injection.framework.ecs.Entity
-import dev.yggdrasil.injection.framework.ecs.System.GameState
+import dev.yggdrasil.injection.framework.ecs.{Entity, GameState}
 import dev.yggdrasil.injection.framework.ui.{ECSActor, ECSActorFactory}
 
 object ActorFactory extends ECSActorFactory {

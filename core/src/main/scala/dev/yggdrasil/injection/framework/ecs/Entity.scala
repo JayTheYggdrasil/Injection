@@ -22,6 +22,10 @@ case class Entity(id: Int, componentMap: ComponentMap){
   def removed[B <: Component](c: Class[B]): Entity = Entity(id, componentMap.removed(c))
 
   def apply[B <: Component](c: Class[B]): B = getInstance(c).get
+
+  def contains[B <: Component](c: Class[B]): Boolean = getInstance(c).nonEmpty
+
+  def mapUpdated[B <: Component](func: B => B) = func
 }
 
 object Entity {

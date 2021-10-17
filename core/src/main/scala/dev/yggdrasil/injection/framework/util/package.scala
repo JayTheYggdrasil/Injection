@@ -1,7 +1,6 @@
 package dev.yggdrasil.injection.framework
 
-import dev.yggdrasil.injection.framework.ecs.Entity
-import dev.yggdrasil.injection.framework.ecs.System.{EntityStorage, GameState}
+import dev.yggdrasil.injection.framework.ecs.{Entity, EntityStorage, GameState}
 import dev.yggdrasil.injection.framework.ui.Components.Visual
 import dev.yggdrasil.injection.project.ecs.Components.Direction
 
@@ -17,8 +16,8 @@ package object util {
   )
 
   def StateVisualDifferences[G](state1: GameState, state2: GameState): (Set[Entity], Set[Entity], Set[Entity]) = {
-    val s1: EntityStorage = state1.entityStorage
-    val s2: EntityStorage = state2.entityStorage
+    val s1: EntityStorage = state1.storage
+    val s2: EntityStorage = state2.storage
 
     val a1 = state1.systems
     val a2 = state2.systems
