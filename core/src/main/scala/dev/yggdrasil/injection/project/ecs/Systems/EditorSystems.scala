@@ -5,6 +5,8 @@ import dev.yggdrasil.injection.framework.ecs.{Entity, EntityStorage, GameState}
 import dev.yggdrasil.injection.project.ecs.Components.{Direction, GridPosition, Sequence}
 import dev.yggdrasil.injection.project.ecs.Entities.{arrow, clear, parentOf, putGridEntity, sequenceAppend}
 
+import scala.reflect.classTag
+
 object EditorSystems {
   case class IndexUp(entityID: Int) extends EventSystem("IndexUp") {
     override def handleEvent(gameState: GameState): GameState = gameState
@@ -22,7 +24,7 @@ object EditorSystems {
       val clickedSpace: Entity = storage(spaceID)
 
       val newArrow = arrow(Direction.UP)
-      val onGrid = putGridEntity(newArrow, clickedSpace(classOf[GridPosition]), storage)
+      val onGrid = putGridEntity(newArrow, clickedSpace[GridPosition], storage)
       val inSequence = sequenceAppend(onGrid(newArrow.id), 1, onGrid)
 
       gameState.copy(storage = inSequence)
@@ -34,7 +36,7 @@ object EditorSystems {
       val (storage, _) = gameState.unpack
 
       val entity = storage(entityID)
-      val newStorage = entity(classOf[Direction]) match {
+      val newStorage = entity[Direction] match {
         case Direction.DOWN => storage.updated(entity.updated(Direction.RIGHT))
         case Direction.RIGHT => storage.updated(entity.updated(Direction.UP))
         case Direction.UP => storage.updated(entity.updated(Direction.LEFT))
@@ -50,7 +52,7 @@ object EditorSystems {
       val (storage, _) = gameState.unpack
 
       val entity = storage(entityID)
-      val newStorage = entity(classOf[Direction]) match {
+      val newStorage = entity[Direction] match {
         case Direction.DOWN => storage.updated(entity.updated(Direction.LEFT))
         case Direction.RIGHT => storage.updated(entity.updated(Direction.DOWN))
         case Direction.UP => storage.updated(entity.updated(Direction.RIGHT))
@@ -75,12 +77,12 @@ object EditorSystems {
     }
 
     def removeFromSequence(entity: Entity, entityStorage: EntityStorage): EntityStorage = {
-      val sequence = entity.getInstance(classOf[Sequence]).getOrElse(return entityStorage)
+      val sequence = entity.getInstance[Sequence].getOrElse(return entityStorage)
 
       // Fix indexes impacted by deletion.
       def decreaseIndices(entityID: Int, storage: EntityStorage): EntityStorage = {
         val entity = storage(entityID)
-        val seq = entity.getInstance(classOf[Sequence])
+        val seq = entity.getInstance[Sequence]
         val newE = seq.map(s => entity.updated(s.copy(index = s.index - 1)))
         val newStorage = newE.map(storage.updated).getOrElse(storage)
         seq.flatMap(_.next).map(decreaseIndices(_, newStorage)).getOrElse(newStorage)
@@ -95,8 +97,8 @@ object EditorSystems {
       val nextID = next.map(_.id)
       val previousID = previous.map(_.id)
 
-      val newP = previous.map(p => p.updated(p(classOf[Sequence]).copy(next = nextID)))
-      val newN = next.map(n => n.updated(n(classOf[Sequence]).copy(previous = previousID)))
+      val newP = previous.map(p => p.updated(p[Sequence].copy(next = nextID)))
+      val newN = next.map(n => n.updated(n[Sequence].copy(previous = previousID)))
 
       val withP = newP match {
         case Some(p) => storage.updated(p)

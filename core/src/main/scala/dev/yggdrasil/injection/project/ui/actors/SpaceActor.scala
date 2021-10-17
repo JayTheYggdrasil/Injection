@@ -14,7 +14,7 @@ object SpaceActor {
   val texture = new Texture("Space.png")
 
   def makesFrom(entity: Entity): Boolean =
-    entity.componentMap.contains(classOf[Space])
+    entity.contains[Space]
 
   def apply(entity: Entity): ECSActor = {
     // Create a new texture region
@@ -29,7 +29,7 @@ object SpaceActor {
     }
 
     // Set it's position
-    val pos = entity(classOf[GridPosition])
+    val pos = entity[GridPosition]
     actor.setPosition(
       (pos.x * Global.GRID_SIZE).toFloat,
       (pos.y * Global.GRID_SIZE).toFloat

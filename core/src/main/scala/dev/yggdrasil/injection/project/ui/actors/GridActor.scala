@@ -20,12 +20,12 @@ abstract class GridActor(override val id: Int, texture: TextureRegion) extends E
     val entity = storage(id)
 
     val pos = if(onGrid(entity)) {
-      parentOf(entity, storage).get.apply(classOf[GridPosition])
+      parentOf(entity, storage).get.apply[GridPosition]
     } else {
-      entity(classOf[GridPosition])
+      entity[GridPosition]
     }
 
-    val shape = entity(classOf[Shape])
+    val shape = entity[Shape]
 
     addAction(Actions.moveTo(
       (pos.x * shape.width).toFloat,

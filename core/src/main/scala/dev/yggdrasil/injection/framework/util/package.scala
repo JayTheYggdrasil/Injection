@@ -5,6 +5,7 @@ import dev.yggdrasil.injection.framework.ui.Components.Visual
 import dev.yggdrasil.injection.project.ecs.Components.Direction
 
 import java.io.{FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
+import scala.reflect.classTag
 
 package object util {
 
@@ -23,13 +24,13 @@ package object util {
     val a2 = state2.systems
 
     // Added
-    val newEntities = s2.join(classOf[Visual]) -- s1.join(classOf[Visual])
+    val newEntities = s2.join(classTag[Visual]) -- s1.join(classTag[Visual])
 
     // Removed
-    val removedEntities = s1.join(classOf[Visual]) -- s2.join(classOf[Visual])
+    val removedEntities = s1.join(classTag[Visual]) -- s2.join(classTag[Visual])
 
     // Changed
-    val changedEntities: Set[Entity] = s2.changedEntities intersect s2.join(classOf[Visual])
+    val changedEntities: Set[Entity] = s2.changedEntities intersect s2.join(classTag[Visual])
 
     (newEntities, removedEntities, changedEntities)
   }

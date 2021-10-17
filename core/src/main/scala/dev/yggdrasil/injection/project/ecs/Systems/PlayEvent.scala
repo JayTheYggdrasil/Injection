@@ -6,6 +6,8 @@ import dev.yggdrasil.injection.project.ecs.Components.Sequence
 import dev.yggdrasil.injection.project.ui.Global
 import dev.yggdrasil.injection.util.{Looped, LoopedList}
 
+import scala.reflect.classTag
+
 case class PlayEvent(override val name: String) extends EventSystem(name) {
 
   override def handleEvent(gameState: GameState): GameState = {
@@ -21,8 +23,8 @@ case class PlayEvent(override val name: String) extends EventSystem(name) {
 
   def compileSequences(gameState: GameState): Looped[Int] = {
     // Not super efficient, more book keeping would help, but it should work.
-    val sequencedEntities = gameState.storage.join(classOf[Sequence])
-    val starts = sequencedEntities.filter(e => e(classOf[Sequence]) match {
+    val sequencedEntities = gameState.storage.join(classTag[Sequence])
+    val starts = sequencedEntities.filter(e => e(classTag[Sequence]) match {
       case Sequence(_, _, None, _) => true
       case _ => false
     })
@@ -30,7 +32,7 @@ case class PlayEvent(override val name: String) extends EventSystem(name) {
   }
 
   def travel(entity: Entity, gameState: GameState): List[Int] = {
-    entity(classOf[Sequence]) match {
+    entity[Sequence] match {
       case Sequence(_, _, _, Some(next)) => entity.id :: travel(gameState.storage(next), gameState)
       case _ => entity.id :: Nil
     }

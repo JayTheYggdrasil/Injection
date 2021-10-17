@@ -19,12 +19,12 @@ object ArrowActor {
   val texture = new Texture("Arrow.png")
 
   def makesFrom(entity: Entity): Boolean =
-    entity.componentMap.contains(classOf[Arrow])
+    entity.contains[Arrow]
 
   def apply(entity: Entity, gameState: GameState): ECSActor = {
     // Create a new texture region
 
-    val visual = entity(classOf[Visual])
+    val visual = entity[Visual]
 
     val textureRegion: TextureRegion = new TextureRegion()
     textureRegion.setTexture(texture)
@@ -43,12 +43,12 @@ object ArrowActor {
         val me = gameState.storage(id)
         val parent = parentOf(me, gameState.storage)
         parent.foreach(p => {
-          val pos = p(classOf[GridPosition])
+          val pos = p[GridPosition]
           addAction(Actions.moveTo(pos.x * Global.GRID_SIZE, pos.y * Global.GRID_SIZE, Global.STEP_INTERVAL))
         })
 
-        println(me(classOf[Direction]))
-        setRotation(dir2deg(me(classOf[Direction])))
+        println(me[Direction])
+        setRotation(dir2deg(me[Direction]))
       }
 
       override def onClick: EventSystem = PlayEvent("PlayFromArrow")
@@ -67,7 +67,7 @@ object ArrowActor {
     }
 
     // Set it's position
-    val pos = parentOf(entity, gameState.storage).get(classOf[GridPosition])
+    val pos = parentOf(entity, gameState.storage).get.apply[GridPosition]
     actor.setPosition(
       (pos.x * Global.GRID_SIZE).toFloat,
       (pos.y * Global.GRID_SIZE).toFloat

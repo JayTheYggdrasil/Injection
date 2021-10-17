@@ -2,13 +2,15 @@ package dev.yggdrasil.injection.framework.ecs
 
 import dev.yggdrasil.injection.framework.ecs.Component.entityToComponentMap
 
+import scala.reflect.ClassTag
 
-case class EntityStorage(m: Map[Class[_ <: Component], Set[Entity]],
+
+case class EntityStorage(m: Map[ClassTag[_ <: Component], Set[Entity]],
                          all: Option[Map[Int, Entity]] = None,
                          changedEntities: Set[Entity] = Set.empty) {
   val allEntities: Map[Int, Entity] = all.getOrElse(m.values.fold(Set.empty[Entity])(_ ++ _).map(e => e.id -> e).toMap)
 
-  def join(over: Class[_ <: Component]*): Set[Entity] =
+  def join(over: ClassTag[_ <: Component]*): Set[Entity] =
     over.foldLeft(allEntities.values.toSet){
       (out, c) => m.get(c) match {
         case Some(entities) => entities.intersect(out)
@@ -19,7 +21,7 @@ case class EntityStorage(m: Map[Class[_ <: Component], Set[Entity]],
   def clearChanged(): EntityStorage = copy(changedEntities = Set.empty)
 
   def updated(entity: Entity): EntityStorage = {
-    def f(v: (Class[_ <: Component], Set[Entity])): (Class[_ <: Component], Set[Entity]) = {
+    def f(v: (ClassTag[_ <: Component], Set[Entity])): (ClassTag[_ <: Component], Set[Entity]) = {
       val (key, value) = v
       key -> (value - entity)
     }
@@ -27,7 +29,7 @@ case class EntityStorage(m: Map[Class[_ <: Component], Set[Entity]],
     val _all = allEntities.updated(entity.id, entity)
 
 
-    val removed = m.map[Class[_ <: Component], Set[Entity]](f)
+    val removed = m.map[ClassTag[_ <: Component], Set[Entity]](f)
     val newM = entity.foldLeft(removed){
       (out, cWc) => {
         val (c, component) = cWc

@@ -5,6 +5,8 @@ import dev.yggdrasil.injection.framework.ui.Components.Visual
 import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction, GridEntity, GridPosition, Pushable, Sequence, Space}
 import dev.yggdrasil.injection.project.ui
 
+import scala.reflect.classTag
+
 object Entities {
   def emptySpace(x: Int, y: Int, gridID: Int): Entity = Entity.fromComponents(
     ui.Global.SPACE_SHAPE,
@@ -27,14 +29,14 @@ object Entities {
   )
 
   def parentOf(entity: Entity, storage: EntityStorage): Option[Entity] =
-    entity.getInstance(classOf[GridEntity]).map(g => storage(g.parentID))
+    entity.getInstance[GridEntity].map(g => storage(g.parentID))
 
   def onGrid(entity: Entity): Boolean =
-    entity.componentMap.contains(classOf[GridEntity])
+    entity.contains[GridEntity]
 
   def neighborOf(entity: Entity, direction: Direction, storage: EntityStorage): Option[Entity] =
     parentOf(entity, storage).flatMap(e => {
-      val pos = e(classOf[GridPosition])
+      val pos = e[GridPosition]
       val targetPos = pos.copy(x = pos.x + direction.x, y = pos.y + direction.y)
 
       // Would prefer a smarter lookup method.
@@ -42,11 +44,11 @@ object Entities {
     })
 
   def childOf(entity: Entity, storage: EntityStorage): Option[Entity] =
-    entity(classOf[Space]).entityRef.map(storage(_))
+    entity[Space].entityRef.map(storage(_))
 
   def spaceAt(position: GridPosition, storage: EntityStorage): Option[Entity] =
-    storage.join(classOf[Space], classOf[GridPosition]).find(e =>
-      e(classOf[GridPosition]) == position
+    storage.join(classTag[Space], classTag[GridPosition]).find(e =>
+      e[GridPosition] == position
     )
 
   def emptyGrid(height: Int, width: Int, gridID: Int): (IndexedSeq[Entity], Map[GridPosition, Int]) = {
@@ -56,7 +58,7 @@ object Entities {
       })
     )
 
-    val lookup: Map[GridPosition, Int] = entities.map(e => e(classOf[GridPosition]) -> e.id).toMap
+    val lookup: Map[GridPosition, Int] = entities.map(e => e[GridPosition] -> e.id).toMap
 
     entities -> lookup
   }
@@ -71,14 +73,14 @@ object Entities {
   }
 
   def sequenceAppend(entity: Entity, sequenceID: Int, storage: EntityStorage): EntityStorage = {
-    val lastInSeq = storage.join(classOf[Sequence]).find(e => e(classOf[Sequence]) match {
+    val lastInSeq = storage.join(classTag[Sequence]).find(e => e[Sequence] match {
       case Sequence(id,_, _, None) if id == sequenceID => true
       case _ => false
     })
 
     lastInSeq match {
       case Some(e) => {
-        val seq = e(classOf[Sequence])
+        val seq = e[Sequence]
         storage.updated(e.updated(seq.copy(next = Some(entity.id))))
           .updated(entity.updated(Sequence(sequenceID, seq.index + 1, Some(e.id), None)))
       }

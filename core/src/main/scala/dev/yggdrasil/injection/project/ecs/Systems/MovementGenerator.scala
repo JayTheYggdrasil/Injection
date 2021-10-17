@@ -35,7 +35,7 @@ case class MovementGenerator(
   def failNext: MovementGenerator = copy(sequence = sequence.next)
 
   def makeEvent(gameState: GameState): Option[System] = gameState.storage(sequence.get) match {
-    case e if e.contains(classOf[Arrow]) && movable(e, gameState.storage) => Some(MoveArrow("MoveArrow", e.id))
+    case e if e.contains[Arrow] && movable(e, gameState.storage) => Some(MoveArrow("MoveArrow", e.id))
     case _ => None
   }
 
@@ -45,7 +45,7 @@ case class MovementGenerator(
   }
 
   def resolveDirection(entity: Entity, direction: Option[Direction] = None): Direction =
-    direction.getOrElse(entity.getInstance(classOf[Direction]).getOrElse(Direction.UP))
+    direction.getOrElse(entity.getInstance[Direction].getOrElse(Direction.UP))
 
   def movable(entity: Entity, entityStorage: EntityStorage, direction: Option[Direction] = None): Boolean = {
     val dir = resolveDirection(entity, direction)
@@ -53,7 +53,7 @@ case class MovementGenerator(
     neighborOf(entity, dir, entityStorage) match {
       case Some(neighbor) => childOf(neighbor, entityStorage) match {
         case Some(ent) => // There's an entity
-            ent.getInstance(classOf[Pushable]).nonEmpty && // Is it pushable?
+            ent.getInstance[Pushable].nonEmpty && // Is it pushable?
               movable(ent, entityStorage, Some(dir)) // can it be pushed?
         case None => true // There's no entity
       }
@@ -68,7 +68,7 @@ case class MovementGenerator(
     val newStorage = childOf(neighbor, entityStorage).map(move(_, entityStorage, Some(dir))).getOrElse(entityStorage)
 
     val parent = parentOf(entity, newStorage).get
-    val neighborPos = neighbor(classOf[GridPosition])
+    val neighborPos = neighbor[GridPosition]
     putGridEntity(entity, neighborPos, newStorage) // Move the entity
       .updated(Entities.clear(parent)) // Clear the space it was in
   }

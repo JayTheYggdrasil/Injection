@@ -4,6 +4,8 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import dev.yggdrasil.injection.framework.ecs.{Entity, GameState}
 import dev.yggdrasil.injection.framework.ui.Components.Visual
 
+import scala.reflect.classTag
+
 abstract class ECSActor protected(val id: Int, texture: TextureRegion) extends EventActor(texture)
 {
   def update(gameState: GameState): Unit
@@ -22,7 +24,7 @@ abstract class ECSActor protected(val id: Int, texture: TextureRegion) extends E
 }
 
 trait ECSActorFactory {
-  def appliesTo(gameState: GameState): Set[Entity] = gameState.storage.join(classOf[Visual])
+  def appliesTo(gameState: GameState): Set[Entity] = gameState.storage.join(classTag[Visual])
   def makeOne(entity: Entity, gameState: GameState): ECSActor
   def makeActors(gameState: GameState): Set[ECSActor] = appliesTo(gameState).map(makeOne(_, gameState))
 }
