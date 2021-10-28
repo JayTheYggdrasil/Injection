@@ -7,6 +7,11 @@ abstract class System(val name: String) {
 }
 
 object System {
-  def stepState(delta: Float, gameState: GameState): GameState =
-    gameState.systems.foldLeft(gameState)((state, system) => system(delta, state))
+  def stepState(delta: Float, gameState: GameState, used: Set[System] = Set.empty): GameState = {
+    val system = gameState.systems.find(s => !used.contains(s))
+    val newState = system.map(s =>
+      stepState(delta, s(delta, gameState), used + s)
+    )
+    newState.getOrElse(gameState)
+  }
 }
