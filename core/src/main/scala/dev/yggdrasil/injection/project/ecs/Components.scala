@@ -4,7 +4,9 @@ import dev.yggdrasil.injection.framework.ecs.Component
 import dev.yggdrasil.injection.util.LoopedList
 
 object Components {
-  case class Direction(x: Int, y: Int) extends Component
+  case class Direction(x: Int, y: Int) extends Component {
+    def opposite: Direction = Direction(-x, -y)
+  }
   object Direction {
     val UP: Direction = Direction(0, 1)
     val DOWN: Direction = Direction(0, -1)

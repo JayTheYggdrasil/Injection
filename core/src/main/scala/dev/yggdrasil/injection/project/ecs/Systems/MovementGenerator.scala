@@ -34,8 +34,8 @@ case class MovementGenerator(
   def successNext: MovementGenerator = copy(sequence = sequence.next, lastSuccessfulState = Some(sequence))
   def failNext: MovementGenerator = copy(sequence = sequence.next)
 
-  def makeEvent(gameState: GameState): Option[System] = gameState.storage(sequence.get) match {
-    case e if e.contains[Arrow] && movable(e, gameState.storage) => Some(MoveArrow("MoveArrow", e.id))
+  def makeEvent(gameState: GameState): Option[System] = gameState.storage.get(sequence.get) match {
+    case Some(e) if e.contains[Arrow] && movable(e, gameState.storage) => Some(MoveArrow("MoveArrow", e.id))
     case _ => None
   }
 
@@ -49,6 +49,8 @@ case class MovementGenerator(
 
   def movable(entity: Entity, entityStorage: EntityStorage, direction: Option[Direction] = None): Boolean = {
     val dir = resolveDirection(entity, direction)
+
+    entity.getInstance[Direction].foreach(d => if(dir.opposite == d) return false)
 
     neighborOf(entity, dir, entityStorage) match {
       case Some(neighbor) => childOf(neighbor, entityStorage) match {

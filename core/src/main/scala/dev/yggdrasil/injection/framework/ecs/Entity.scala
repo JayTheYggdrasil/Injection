@@ -1,7 +1,6 @@
 package dev.yggdrasil.injection.framework.ecs
 
 import dev.yggdrasil.injection.framework.ecs.Component.ComponentMap
-import dev.yggdrasil.injection.project.ecs.Components.{Arrow, Direction}
 
 import scala.reflect.{ClassTag}
 
@@ -43,10 +42,5 @@ object Entity {
   def fromComponents(components: Component*): Entity = {
     id += 1
     Entity(id, components.map(c => (ClassTag(c.getClass), c)).toMap)
-  }
-
-  def main(args: Array[String]): Unit = {
-    val e = Entity.fromComponents(Arrow(), Direction.UP)
-
   }
 }
