@@ -1,10 +1,11 @@
 package dev.yggdrasil.injection.project.ui
 
+import dev.yggdrasil.injection.framework.ecs.Systems.MuteEvents
 import dev.yggdrasil.injection.framework.ecs.{Entity, EntityStorage, GameState, System}
 import dev.yggdrasil.injection.framework.ui.{ECSActorFactory, ECSScreen}
 import dev.yggdrasil.injection.project.ecs.Entities.{arrow, emptyGrid, putGridEntity}
+import dev.yggdrasil.injection.project.ecs.Systems.PlayEvent
 import dev.yggdrasil.injection.project.ui.actors.ActorFactory
-import dev.yggdrasil.injection.util.{Looped, LoopedList}
 
 class LevelScreen extends ECSScreen {
   override def initialState: GameState = LevelScreen.initialState
@@ -42,7 +43,7 @@ object LevelScreen {
 
     // Create the movement sequence
 //    val sequence: Looped[Int] = LoopedList(List(arrowEntity.id, arrowEntity2.id))
-    val systems: List[System] = Nil
+    val systems: List[System] = MuteEvents("MutePlayEvent", _.isInstanceOf[PlayEvent]) :: Nil
 
     GameState(storage, systems)
   }
